@@ -21,22 +21,23 @@ const ProductListPaginated: React.FC = () => {
 
   const { refreshCart } = useCart();
 
-  // Ajout au panier (depuis la modale)
-  const handleAddToCart = (product: Product, quantity: number) => {
-    fetch('/api/cart/add', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ product, quantity }),
+const handleAddToCart = (product: Product, quantity: number) => {
+  fetch('/api/cart/add', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ product, quantity }),
+  })
+    .then(res => res.json())
+    .then(() => {
+      refreshCart();
+      setModalOpen(false);
     })
-      .then(res => res.json())
-      .then(() => {
-        refreshCart();
-        setModalOpen(false);
-      })
-      .catch(err => {
-        alert('Erreur lors de l\'ajout au panier : ' + err.message);
-      });
-  };
+    .catch(err => {
+      alert('Erreur lors de l\'ajout au panier : ' + err.message);
+    });
+};
+
 
   // Récupère les produits paginés à chaque changement de page
   useEffect(() => {

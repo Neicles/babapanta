@@ -6,7 +6,7 @@ import { useCart } from "../contexts/CartContext";
 interface DrawerPanierProps {
   open: boolean;
   onClose: () => void;
-  onRequestShipping?: () => void; // Appelé si le panier est valide
+  onRequestShipping?: () => void;
 }
 
 const drawerBackdrop: React.CSSProperties = {
@@ -37,57 +37,79 @@ const DrawerPanier: React.FC<DrawerPanierProps> = ({ open, onClose, onRequestShi
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const { refreshCart } = useCart();
 
-  // Récupérer le panier à chaque ouverture
-  useEffect(() => {
-    if (open) fetchCart();
-    setValidationErrors([]);
-    // eslint-disable-next-line
-  }, [open]);
+useEffect(() => {
+  if (open) {
+    fetchCart();
+    refreshCart();
+  }
+  setValidationErrors([]);
+}, [open]);
+
 
   const fetchCart = () => {
     setLoading(true);
-    fetch("/api/cart")
+    fetch("/api/cart", {
+      credentials: "include",
+    })
       .then(res => res.json())
       .then((panier: Panier) => setCart(panier))
       .finally(() => setLoading(false));
   };
 
-  // Mettre à jour la quantité d'un produit
   const handleQty = (item: CartItem, newQty: number) => {
     if (newQty <= 0) return;
     fetch("/api/cart/update", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ productId: item.product.id, quantity: newQty, stock: item.product.stock })
+      credentials: "include",
+      body: JSON.stringify({
+        productId: item.product.id,
+        quantity: newQty,
+        stock: item.product.stock
+      })
     })
       .then(res => res.json())
-      .then(() => { fetchCart(); refreshCart(); });
+      .then(() => {
+        fetchCart();
+        refreshCart();
+      });
   };
 
-  // Supprimer un article
   const handleRemove = (item: CartItem) => {
-    fetch(`/api/cart/remove/${item.product.id}`, { method: "DELETE" })
-      .then(() => { fetchCart(); refreshCart(); });
+    fetch(`/api/cart/remove/${item.product.id}`, {
+      method: "DELETE",
+      credentials: "include"
+    }).then(() => {
+      fetchCart();
+      refreshCart();
+    });
   };
 
-  // Vider le panier
   const handleClear = () => {
-    fetch("/api/cart/clear", { method: "DELETE" })
-      .then(() => { fetchCart(); refreshCart(); });
+    fetch("/api/cart/clear", {
+      method: "DELETE",
+      credentials: "include"
+    }).then(() => {
+      fetchCart();
+      refreshCart();
+    });
   };
 
-  // Validation panier + navigation vers livraison
   const handleValidate = async () => {
     setValidateLoading(true);
     setValidationErrors([]);
     try {
-      const res = await fetch("/api/cart/validate", { method: "POST" });
+      const res = await fetch("/api/cart/validate", {
+        method: "POST",
+        credentials: "include"
+      });
       const data = await res.json();
       setValidateLoading(false);
       if (res.ok && data.valid) {
-        // Panier valide, go formulaire
         onClose();
-        setTimeout(() => { onRequestShipping && onRequestShipping(); }, 200);
+        setTimeout(() => {
+          onRequestShipping && onRequestShipping();
+        }, 200);
       } else {
         setValidationErrors(data.errors || ["Erreur inconnue."]);
       }
@@ -99,7 +121,6 @@ const DrawerPanier: React.FC<DrawerPanierProps> = ({ open, onClose, onRequestShi
 
   if (!open) return null;
 
-  // Fermer si on clique sur le backdrop
   const handleBackdrop = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) onClose();
   };
@@ -150,7 +171,6 @@ const DrawerPanier: React.FC<DrawerPanierProps> = ({ open, onClose, onRequestShi
               >🗑️</button>
             </div>
           ))}
-          {/* Erreurs de validation du panier */}
           {validationErrors.length > 0 && (
             <div style={{
               background: "#fff0f0", color: "#c00", border: "1px solid #f9dada",
@@ -164,7 +184,6 @@ const DrawerPanier: React.FC<DrawerPanierProps> = ({ open, onClose, onRequestShi
           )}
           {!loading && cart && cart.items.length > 0 && <hr style={line} />}
         </div>
-        {/* Footer : sous-total et actions */}
         {cart && cart.items.length > 0 && (
           <div style={{
             padding: "18px 26px",

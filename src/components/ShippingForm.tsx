@@ -1,28 +1,26 @@
 import React, { useState } from "react";
+
 const defaultForm = {
   firstName: "", lastName: "", address: "", city: "", postalCode: "",
   country: "", email: "", phone: ""
 };
 
 const fieldLabels: Record<string, string> = {
-  firstName: "Prénom",
-  lastName: "Nom",
-  address: "Adresse",
-  city: "Ville",
-  postalCode: "Code postal",
-  country: "Pays",
-  email: "E-mail",
-  phone: "Téléphone",
+  firstName: "Prénom", lastName: "Nom", address: "Adresse",
+  city: "Ville", postalCode: "Code postal", country: "Pays",
+  email: "E-mail", phone: "Téléphone"
 };
 
-const ShippingForm: React.FC<{ onSuccess: (data: any) => void }> = ({ onSuccess }) => {
+const ShippingForm: React.FC<{
+  onSuccess: (data: any) => void;
+  onBack?: () => void;
+}> = ({ onSuccess, onBack }) => {
   const [form, setForm] = useState(defaultForm);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
-    // Efface l’erreur du champ quand l’utilisateur modifie
     setErrors({ ...errors, [e.target.name]: "" });
   };
 
@@ -31,10 +29,12 @@ const ShippingForm: React.FC<{ onSuccess: (data: any) => void }> = ({ onSuccess 
     setLoading(true);
     setErrors({});
     const res = await fetch("/api/order/shipping", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  credentials: "include", // 🔥 🔥 🔥 à ne pas oublier
+  body: JSON.stringify(form),
+});
+
     setLoading(false);
     if (res.ok) {
       const data = await res.json();
@@ -43,20 +43,17 @@ const ShippingForm: React.FC<{ onSuccess: (data: any) => void }> = ({ onSuccess 
       let err;
       try {
         err = await res.json();
-      } catch (e) {
+      } catch {
         err = {};
       }
       if (err.errors) {
         const fieldErrors: any = {};
         err.errors.forEach((e: any) => {
-          // Parfois le champ s’appelle objectName
           fieldErrors[e.field || e.objectName] = e.defaultMessage;
         });
         setErrors(fieldErrors);
-      } else if (err.message) {
-        alert("Erreur : " + err.message);
       } else {
-        alert("Erreur inconnue");
+        alert("Erreur: " + (err.message || "Inconnue"));
       }
     }
   };
@@ -85,11 +82,24 @@ const ShippingForm: React.FC<{ onSuccess: (data: any) => void }> = ({ onSuccess 
       <button
         type="submit"
         style={{
-          marginTop: 28, width: "100%", background: "#111", color: "#fff", fontWeight: 600,
-          border: "none", borderRadius: 4, padding: "14px 0", fontSize: 17, cursor: "pointer"
+          marginTop: 12, background: "#111", color: "#fff",
+          fontWeight: 600, border: "none", borderRadius: 4,
+          padding: "14px 0", fontSize: 17, cursor: "pointer"
         }}
         disabled={loading}
       >Valider la livraison</button>
+
+      {onBack && (
+        <button
+          type="button"
+          onClick={onBack}
+          style={{
+            marginTop: 12, background: "#eee", color: "#333",
+            padding: "10px 0", fontSize: 16, borderRadius: 4,
+            border: "1px solid #bbb", cursor: "pointer"
+          }}
+        >← Retour au panier</button>
+      )}
     </form>
   );
 };
