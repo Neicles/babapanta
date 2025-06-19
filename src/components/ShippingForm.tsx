@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 
 const defaultForm = {
   firstName: "", lastName: "", address: "", city: "", postalCode: "",
@@ -11,13 +11,16 @@ const fieldLabels: Record<string, string> = {
   email: "E-mail", phone: "Téléphone"
 };
 
+type FormData = typeof defaultForm;
+
 const ShippingForm: React.FC<{
   onSuccess: (data: any) => void;
   onBack?: () => void;
 }> = ({ onSuccess, onBack }) => {
-  const [form, setForm] = useState(defaultForm);
+  const [form, setForm] = useState<FormData>(defaultForm);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [loading, setLoading] = useState(false);
+  const firstErrorField = useRef<HTMLInputElement | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -28,12 +31,14 @@ const ShippingForm: React.FC<{
     e.preventDefault();
     setLoading(true);
     setErrors({});
+    firstErrorField.current = null;
+
     const res = await fetch("/api/order/shipping", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  credentials: "include", // 🔥 🔥 🔥 à ne pas oublier
-  body: JSON.stringify(form),
-});
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(form),
+    });
 
     setLoading(false);
     if (res.ok) {
@@ -52,6 +57,12 @@ const ShippingForm: React.FC<{
           fieldErrors[e.field || e.objectName] = e.defaultMessage;
         });
         setErrors(fieldErrors);
+        // Focus sur le premier champ en erreur si possible
+        setTimeout(() => {
+          const firstField = Object.keys(fieldErrors)[0];
+          const el = document.querySelector(`input[name="${firstField}"]`) as HTMLInputElement | null;
+          el?.focus();
+        }, 30);
       } else {
         alert("Erreur: " + (err.message || "Inconnue"));
       }
@@ -59,7 +70,7 @@ const ShippingForm: React.FC<{
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: "grid", gap: 18 }}>
+    <form onSubmit={handleSubmit} style={{ display: "grid", gap: 18, maxWidth: 440, margin: "0 auto" }}>
       {Object.entries(defaultForm).map(([field, _]) => (
         <div key={field}>
           <input
@@ -70,12 +81,15 @@ const ShippingForm: React.FC<{
             style={{
               width: "100%", padding: 10, borderRadius: 4,
               border: errors[field] ? "1.8px solid #e24" : "1.2px solid #bbb",
-              background: errors[field] ? "#fff4f4" : "#fff"
+              background: errors[field] ? "#fff4f4" : "#fff",
+              outline: "none"
             }}
             autoComplete="off"
+            aria-invalid={!!errors[field]}
+            aria-describedby={errors[field] ? `${field}-error` : undefined}
           />
           {errors[field] && (
-            <span style={{ color: "#c11", fontSize: 13 }}>{errors[field]}</span>
+            <span id={`${field}-error`} style={{ color: "#c11", fontSize: 13 }}>{errors[field]}</span>
           )}
         </div>
       ))}
@@ -87,8 +101,9 @@ const ShippingForm: React.FC<{
           padding: "14px 0", fontSize: 17, cursor: "pointer"
         }}
         disabled={loading}
-      >Valider la livraison</button>
-
+      >
+        {loading ? "Validation en cours..." : "Valider la livraison"}
+      </button>
       {onBack && (
         <button
           type="button"
