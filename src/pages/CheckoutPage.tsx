@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from "react";
 import ShippingForm from "../components/ShippingForm";
+import CarrierSelect from "../components/Carrier";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../contexts/CartContext";
 
-const steps = ["Panier", "Livraison", "Paiement", "Confirmation"];
+const steps = ["Panier", "Livraison", "Livreur", "Paiement", "Confirmation"];
 
 const CheckoutPage: React.FC = () => {
   const [step, setStep] = useState<number>(0);
   const [shippingForm, setShippingForm] = useState<any>(null);
   const [poids, setPoids] = useState<number | null>(null);
+  const [selectedCarrierId, setSelectedCarrierId] = useState<string>("");
   const { cart, refreshCart } = useCart();
   const navigate = useNavigate();
 
@@ -42,11 +44,7 @@ const CheckoutPage: React.FC = () => {
           <div>Articles: {cart.items.length}</div>
           <div>
             Sous-total:{" "}
-            {cart.items.reduce(
-              (s, i) => s + i.quantity * i.product.price,
-              0
-            )}{" "}
-            €
+            {cart.items.reduce((s, i) => s + i.quantity * i.product.price, 0)} €
           </div>
           {shippingForm && (
             <div style={{ marginTop: 12 }}>
@@ -54,18 +52,20 @@ const CheckoutPage: React.FC = () => {
               <br />
               {shippingForm.firstName} {shippingForm.lastName}
               <br />
-              {shippingForm.address}, {shippingForm.city}, {shippingForm.postalCode},{" "}
-              {shippingForm.country}
+              {shippingForm.address}, {shippingForm.city},{" "}
+              {shippingForm.postalCode}, {shippingForm.country}
               <br />
               {shippingForm.email} – {shippingForm.phone}
-              {poids !== null && (
-                <>
-                  <br />
-                  <span style={{ fontSize: 15, color: "#444" }}>
-                    <b>Poids total du panier&nbsp;:</b> {poids} g
-                  </span>
-                </>
-              )}
+            </div>
+          )}
+          {poids !== null && (
+            <div style={{ marginTop: 8 }}>
+              <b>Poids total :</b> {poids} g
+            </div>
+          )}
+          {selectedCarrierId && (
+            <div style={{ marginTop: 8 }}>
+              <b>Transporteur sélectionné :</b> {selectedCarrierId}
             </div>
           )}
         </div>
@@ -125,12 +125,18 @@ const CheckoutPage: React.FC = () => {
 
       {step === 2 && (
         <div>
-          <h3>Paiement</h3>
+          <CarrierSelect
+            poids={poids ?? 0}
+            selected={selectedCarrierId}
+            onSelect={(id: string) => setSelectedCarrierId(id)}
+
+          />
           <button
             style={{ marginTop: 20, padding: 12, fontSize: 18 }}
             onClick={() => setStep(3)}
+            disabled={!selectedCarrierId}
           >
-            Payer
+            Continuer vers le paiement →
           </button>
           <br />
           <button
@@ -143,6 +149,25 @@ const CheckoutPage: React.FC = () => {
       )}
 
       {step === 3 && (
+        <div>
+          <h3>Paiement</h3>
+          <button
+            style={{ marginTop: 20, padding: 12, fontSize: 18 }}
+            onClick={() => setStep(4)}
+          >
+            Payer
+          </button>
+          <br />
+          <button
+            style={{ marginTop: 12, padding: 8, fontSize: 14 }}
+            onClick={() => setStep(2)}
+          >
+            ← Retour au choix du livreur
+          </button>
+        </div>
+      )}
+
+      {step === 4 && (
         <div>
           <h3>Merci, commande confirmée !</h3>
           <button onClick={() => navigate("/")}>Retour accueil</button>
