@@ -418,12 +418,24 @@ const CheckoutPage: React.FC = () => {
               boxShadow: "0 2px 8px #eee"
             }}
             onClick={async () => {
-              await fetch("/api/cart/clear", {
-                method: "DELETE",
-                credentials: "include"
-              });
-              refreshCart();
-              navigate("/");
+              try {
+                const res = await fetch("/api/order/confirm", {
+                  method: "POST",
+                  credentials: "include"
+                });
+                if (!res.ok) {
+                  console.error("Erreur lors de la confirmation de la commande");
+                  return;
+                }
+                await fetch("/api/cart/clear", {
+                  method: "DELETE",
+                  credentials: "include"
+                });
+                refreshCart();
+                navigate("/");
+              } catch (error) {
+                console.error("Erreur réseau ou autre", error);
+              }
             }}
           >
             Retour accueil
