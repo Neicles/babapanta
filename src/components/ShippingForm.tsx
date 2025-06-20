@@ -22,10 +22,20 @@ const ShippingForm: React.FC<{
   const [loading, setLoading] = useState(false);
   const firstErrorField = useRef<HTMLInputElement | null>(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-    setErrors({ ...errors, [e.target.name]: "" });
-  };
+const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const { name, value } = e.target;
+
+  if (name === "postalCode") {
+    if (/[^0-9]/.test(value) || value.length > 5) return;
+  }
+
+   if (name === "phone") {
+    if (/[^0-9]/.test(value) || value.length > 10) return;
+  }
+
+  setForm({ ...form, [name]: value });
+  setErrors({ ...errors, [name]: "" });
+};
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,6 +88,8 @@ const ShippingForm: React.FC<{
             value={(form as any)[field]}
             onChange={handleChange}
             placeholder={fieldLabels[field] || field}
+            inputMode={field === "postalCode" ? "numeric" : undefined}
+            pattern={field === "postalCode" ? "\\d*" : undefined}
             style={{
               width: "100%", padding: 10, borderRadius: 4,
               border: errors[field] ? "1.8px solid #e24" : "1.2px solid #bbb",
