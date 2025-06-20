@@ -417,7 +417,14 @@ const CheckoutPage: React.FC = () => {
               cursor: "pointer",
               boxShadow: "0 2px 8px #eee"
             }}
-            onClick={() => navigate("/")}
+            onClick={async () => {
+              await fetch("/api/cart/clear", {
+                method: "DELETE",
+                credentials: "include"
+              });
+              refreshCart();
+              navigate("/");
+            }}
           >
             Retour accueil
           </button>
