@@ -1,19 +1,39 @@
 import React from "react";
-import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import CartIcon from "./components/CartIcon";
 import ProductListPaginated from "./components/ProductListPaginated";
 import DrawerPanier from "./components/DrawerPanier";
 import CheckoutPage from "./pages/CheckoutPage";
 
+const ZaraHeader = () => (
+  <header
+    style={{
+      paddingTop: 36,
+      paddingBottom: 30,
+      background: "#fff",
+      textAlign: "center",
+      borderBottom: "1.5px solid #eee",
+      marginBottom: 38,
+      letterSpacing: 9,
+      fontWeight: 700,
+      fontFamily: "Bodoni Moda, Didot, serif",
+      fontSize: 39,
+      color: "#111",
+      textTransform: "uppercase",
+      userSelect: "none",
+    }}
+  >
+    BABAPANTA
+  </header>
+);
+
 const App: React.FC = () => {
-  // Tu peux gérer le panier drawer ici seulement pour la page catalogue
   const [drawerOpen, setDrawerOpen] = React.useState(false);
 
   return (
     <BrowserRouter>
       <div style={{ background: "#fff", minHeight: "100vh" }}>
-        {/* Header et Panier (affiché partout) */}
-        <header>{/* ... ton header ... */}</header>
+        <ZaraHeader />
         <div style={{ position: "fixed", top: 34, right: 44, zIndex: 2000 }}>
           <CartIcon onClick={() => setDrawerOpen(true)} />
         </div>
@@ -27,7 +47,6 @@ const App: React.FC = () => {
                 <DrawerPanier
                   open={drawerOpen}
                   onClose={() => setDrawerOpen(false)}
-                  // On redirige vers /checkout si panier validé
                   onRequestShipping={() => {
                     setDrawerOpen(false);
                     setTimeout(() => window.location.href = "/checkout", 200);
